@@ -46,11 +46,12 @@ if img is not None:
     pred_prob = model.predict(img_array)
     top_idx = pred_prob[0].argsort()[-3:][::-1]  # top 3 predictions
 
-    st.image(img, caption="Uploaded Image", use_column_width=True)
+    st.image(img, caption="Uploaded Image", use_container_width=True)
 
     st.markdown("### 🔹 Predictions:")
     for i, idx in enumerate(top_idx):
-        label = class_labels[str(idx)]
+        # Support both str and int keys in JSON
+        label = class_labels.get(str(idx)) or class_labels.get(idx)
         confidence = pred_prob[0][idx]*100
         st.markdown(f"{i+1}. {label}** — {confidence:.2f}% confidence")
 
