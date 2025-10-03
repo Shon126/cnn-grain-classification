@@ -4,21 +4,28 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 import json
+import os
 
 st.set_page_config(page_title="Grain Identifier", layout="wide")
 
-# ---------------- Load Model ----------------
+# ---------------- Load Model & Labels ----------------
 @st.cache_resource
 def load_model_and_labels():
-    model = tf.keras.models.load_model("grains_mobilenetv2_cleaned.h5")
+    # Load model from SavedModel folder
+    MODEL_PATH = os.path.join(os.getcwd(), "saved_model")
+    model = tf.keras.models.load_model(MODEL_PATH)
+
+    # Load class labels
     with open("class_labels.json", "r") as f:
         class_labels = json.load(f)  # list of class names
+
+    # Load grains info (protein, carbs, uses)
     with open("grains_info.json", "r") as f:
         grains_info = json.load(f)
     return model, class_labels, grains_info
 
 model, class_labels, grains_info = load_model_and_labels()
-IMG_SIZE = 128  # model input size
+IMG_SIZE = 128  # Model input size
 
 # ---------------- App UI ----------------
 st.title("🌾 Grain Identifier")
@@ -48,7 +55,7 @@ if img is not None:
     else:
         img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
 
-        # Predict top 1
+        # Predict top 1 only
         pred_prob = model.predict(img_array)
         top_idx = np.argmax(pred_prob[0])
         label = class_labels[top_idx]
