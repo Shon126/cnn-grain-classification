@@ -12,7 +12,7 @@ st.set_page_config(page_title="Grain Identifier", layout="wide")
 def load_model_and_labels():
     model = tf.keras.models.load_model("grains_mobilenetv2_cleaned.h5")
     with open("class_labels.json", "r") as f:
-        class_labels = json.load(f)
+        class_labels = json.load(f)  # assuming a list like ["bajra","chickpea",...]
     with open("grains_info.json", "r") as f:
         grains_info = json.load(f)
     return model, class_labels, grains_info
@@ -50,8 +50,7 @@ if img is not None:
 
     st.markdown("### 🔹 Predictions:")
     for i, idx in enumerate(top_idx):
-        # Support both str and int keys in JSON
-        label = class_labels.get(str(idx)) or class_labels.get(idx)
+        label = class_labels[idx]  # use index since class_labels is a list
         confidence = pred_prob[0][idx]*100
         st.markdown(f"{i+1}. {label}** — {confidence:.2f}% confidence")
 
