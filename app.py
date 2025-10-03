@@ -1,77 +1,71 @@
-# ================= APP.PY =================
+# ---------------- IMPORTS ----------------
 import streamlit as st
-from PIL import Image
-import numpy as np
 import tensorflow as tf
+import numpy as np
+from PIL import Image
 import json
-import os
 
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Grain Identifier", layout="wide")
 
-# ---------------- Load Model & Labels ----------------
-@st.cache_resource
+MODEL_PATH = "grains_mobilenetv2_cleaned.keras"
+LABELS_PATH = "class_labels.json"
+
+# Grain info dictionary (update as per your data)
+grains_info = {
+    "maize": {"Protein": "9 g per 100g", "Carbs": "74 g per 100g", "Uses": "Cornmeal, porridge, popcorn"},
+    "proso": {"Protein": "11 g per 100g", "Carbs": "70 g per 100g", "Uses": "Bird feed, porridge"},
+    "red kidney beans": {"Protein": "24 g per 100g", "Carbs": "60 g per 100g", "Uses": "Curries, soups"},
+    "chickpea": {"Protein": "19 g per 100g", "Carbs": "61 g per 100g", "Uses": "Hummus, curries"},
+    "soybean": {"Protein": "36 g per 100g", "Carbs": "30 g per 100g", "Uses": "Tofu, soy milk, flour"},
+    "lentils": {"Protein": "26 g per 100g", "Carbs": "60 g per 100g", "Uses": "Soups, curries"},
+    "jowar": {"Protein": "11 g per 100g", "Carbs": "72 g per 100g", "Uses": "Flatbreads, porridges"},
+    "sesame": {"Protein": "18 g per 100g", "Carbs": "23 g per 100g", "Uses": "Oil, seeds in cooking"},
+    "rice": {"Protein": "7 g per 100g", "Carbs": "80 g per 100g", "Uses": "Staple food, flour"},
+    "ragi": {"Protein": "7 g per 100g", "Carbs": "72 g per 100g", "Uses": "Porridge, flour"},
+    "bajra": {"Protein": "11 g per 100g", "Carbs": "67 g per 100g", "Uses": "Flatbreads, porridge"},
+    "foxtail millet": {"Protein": "12 g per 100g", "Carbs": "65 g per 100g", "Uses": "Porridge, flour"},
+    "wheat": {"Protein": "13 g per 100g", "Carbs": "71 g per 100g", "Uses": "Bread, pasta, flour"}
+}
+
+# ---------------- LOAD MODEL & LABELS ----------------
+@st.cache_resource(show_spinner=True)
 def load_model_and_labels():
-    # Load model from SavedModel folder
-    MODEL_PATH = os.path.join(os.getcwd(), "saved_model")
     model = tf.keras.models.load_model(MODEL_PATH)
+    with open(LABELS_PATH, "r") as f:
+        class_labels = json.load(f)
+    return model, class_labels
 
-    # Load class labels
-    with open("class_labels.json", "r") as f:
-        class_labels = json.load(f)  # list of class names
+model, class_labels = load_model_and_labels()
 
-    # Load grains info (protein, carbs, uses)
-    with open("grains_info.json", "r") as f:
-        grains_info = json.load(f)
-    return model, class_labels, grains_info
-
-model, class_labels, grains_info = load_model_and_labels()
-IMG_SIZE = 128  # Model input size
-
-# ---------------- App UI ----------------
+# ---------------- TITLE ----------------
 st.title("🌾 Grain Identifier")
-st.write("Upload a grain image or take a photo to identify it and learn its nutritional info and uses.")
+st.write("Upload a grain image or take a photo to identify it.")
 
-# File uploader or camera input
-option = st.radio("Choose input method:", ["Upload Image", "Take Photo"])
+# ---------------- IMAGE INPUT ----------------
+uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
-img = None
-if option == "Upload Image":
-    uploaded_file = st.file_uploader("Upload your grain image", type=["jpg","jpeg","png"])
-    if uploaded_file:
-        img = Image.open(uploaded_file).convert("RGB")
-elif option == "Take Photo":
-    img = st.camera_input("Take a photo of the grain")
+if uploaded_file is not None:
+    img = Image.open(uploaded_file).convert("RGB")
+    st.image(img, caption="Uploaded Image", use_column_width=True)
+    
+    # ---------------- PREPROCESS ----------------
+    IMG_SIZE = (128, 128)
+    img_resized = img.resize(IMG_SIZE)
+    img_array = np.array(img_resized) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+    
+    # ---------------- PREDICT ----------------
+    pred_prob = model.predict(img_array)[0]
+    idx = int(np.argmax(pred_prob))
+    label = class_labels[str(idx)] if str(idx) in class_labels else class_labels[idx]
+    confidence = pred_prob[idx] * 100
 
-# ---------------- Prediction ----------------
-if img is not None:
-    st.image(img, caption="Uploaded Image", use_container_width=True)
-
-    # Preprocess image (same as training)
-    img_resized = img.resize((IMG_SIZE, IMG_SIZE))
-    img_array = np.array(img_resized).astype(np.float32) / 255.0
-
-    if img_array.shape != (IMG_SIZE, IMG_SIZE, 3):
-        st.error(f"⚠ Image shape mismatch: {img_array.shape}. Please upload an RGB image.")
-    else:
-        img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
-
-        # Predict top 1 only
-        pred_prob = model.predict(img_array)
-        top_idx = np.argmax(pred_prob[0])
-        label = class_labels[top_idx]
-        confidence = pred_prob[0][top_idx]*100
-
-        st.markdown("### 🔹 Prediction:")
-        st.markdown(f"{label}** — {confidence:.2f}% confidence")
-
-        # Display nutritional info & uses
-        if label in grains_info:
-            info = grains_info[label]
-            st.markdown(f"- *Protein:* {info.get('protein','N/A')} g per 100g")
-            st.markdown(f"- *Carbs:* {info.get('carbs','N/A')} g per 100g")
-            st.markdown(f"- *Uses:* {info.get('uses','N/A')}")
-
-        # ---------------- Optional Debug ----------------
-        st.markdown("### 🔹 Raw Prediction Probabilities (Debug)")
-        for i, p in enumerate(pred_prob[0]):
-            st.write(f"{class_labels[i]}: {p*100:.2f}%")
+    # ---------------- DISPLAY RESULTS ----------------
+    st.subheader("🔹 Prediction")
+    st.write(f"{label}** — {confidence:.2f}% confidence")
+    info = grains_info.get(label, {})
+    if info:
+        st.write(f"*Protein:* {info['Protein']}")
+        st.write(f"*Carbs:* {info['Carbs']}")
+        st.write(f"*Uses:* {info['Uses']}")
