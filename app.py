@@ -12,7 +12,7 @@ st.set_page_config(page_title="Grain Identifier", layout="wide")
 def load_model_and_labels():
     model = tf.keras.models.load_model("grains_mobilenetv2_cleaned.h5")
     with open("class_labels.json", "r") as f:
-        class_labels = json.load(f)  # assuming a list like ["bajra","chickpea",...]
+        class_labels = json.load(f)  # list of class names
     with open("grains_info.json", "r") as f:
         grains_info = json.load(f)
     return model, class_labels, grains_info
@@ -37,27 +37,34 @@ elif option == "Take Photo":
 
 # ---------------- Prediction ----------------
 if img is not None:
-    # Preprocess image
-    img_resized = img.resize((IMG_SIZE, IMG_SIZE))
-    img_array = np.array(img_resized) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)  # batch dimension
-
-    # Predict
-    pred_prob = model.predict(img_array)
-    top_idx = pred_prob[0].argsort()[-3:][::-1]  # top 3 predictions
-
     st.image(img, caption="Uploaded Image", use_container_width=True)
 
-    st.markdown("### 🔹 Predictions:")
-    for i, idx in enumerate(top_idx):
-        label = class_labels[idx]  # use index since class_labels is a list
-        confidence = pred_prob[0][idx]*100
-        st.markdown(f"{i+1}. {label}** — {confidence:.2f}% confidence")
+    # Preprocess image (same as training)
+    img_resized = img.resize((IMG_SIZE, IMG_SIZE))
+    img_array = np.array(img_resized).astype(np.float32) / 255.0
 
-        # Display info
+    if img_array.shape != (IMG_SIZE, IMG_SIZE, 3):
+        st.error(f"⚠ Image shape mismatch: {img_array.shape}. Please upload an RGB image.")
+    else:
+        img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
+
+        # Predict top 1
+        pred_prob = model.predict(img_array)
+        top_idx = np.argmax(pred_prob[0])
+        label = class_labels[top_idx]
+        confidence = pred_prob[0][top_idx]*100
+
+        st.markdown("### 🔹 Prediction:")
+        st.markdown(f"{label}** — {confidence:.2f}% confidence")
+
+        # Display nutritional info & uses
         if label in grains_info:
             info = grains_info[label]
             st.markdown(f"- *Protein:* {info.get('protein','N/A')} g per 100g")
             st.markdown(f"- *Carbs:* {info.get('carbs','N/A')} g per 100g")
             st.markdown(f"- *Uses:* {info.get('uses','N/A')}")
-        st.markdown("---")
+
+        # ---------------- Optional Debug ----------------
+        st.markdown("### 🔹 Raw Prediction Probabilities (Debug)")
+        for i, p in enumerate(pred_prob[0]):
+            st.write(f"{class_labels[i]}: {p*100:.2f}%")
