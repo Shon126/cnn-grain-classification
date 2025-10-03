@@ -1,15 +1,15 @@
 {
-  "rice": {"protein": "7%", "carbs": "80%", "uses": "Staple food, flour, snacks"},
-  "wheat": {"protein": "13%", "carbs": "72%", "uses": "Bread, flour, pasta"},
-  "maize": {"protein": "9%", "carbs": "74%", "uses": "Food, animal feed, industrial"},
-  "chickpea": {"protein": "19%", "carbs": "61%", "uses": "Curries, snacks, flour"},
-  "lentils": {"protein": "25%", "carbs": "60%", "uses": "Soups, curries"},
-  "bajra": {"protein": "11%", "carbs": "67%", "uses": "Flour, flatbreads, porridges"},
-  "ragi": {"protein": "7%", "carbs": "72%", "uses": "Flour, porridge, malt drinks"},
-  "soybean": {"protein": "36%", "carbs": "30%", "uses": "Oil, tofu, animal feed"},
-  "red kidney beans": {"protein": "24%", "carbs": "60%", "uses": "Curries, salads"},
-  "proso": {"protein": "12%", "carbs": "70%", "uses": "Porridge, bird feed"},
-  "sesame": {"protein": "18%", "carbs": "23%", "uses": "Oil, snacks"},
-  "foxtail millet": {"protein": "12%", "carbs": "65%", "uses": "Porridge, flour"},
-  "jowar": {"protein": "11%", "carbs": "72%", "uses": "Flour, rotis, porridges"}
+    "bajra": {"protein": 11, "carbs": 67, "uses": "Breads, porridge"},
+    "chickpea": {"protein": 19, "carbs": 61, "uses": "Curries, salads, flour"},
+    "foxtail millet": {"protein": 12, "carbs": 65, "uses": "Porridge, flatbreads"},
+    "jowar": {"protein": 11, "carbs": 72, "uses": "Flatbreads, porridge"},
+    "lentils": {"protein": 26, "carbs": 60, "uses": "Soups, curries"},
+    "maize": {"protein": 9, "carbs": 74, "uses": "Snacks, flour, popcorn"},
+    "proso": {"protein": 12, "carbs": 68, "uses": "Porridge, bird feed"},
+    "ragi": {"protein": 7, "carbs": 72, "uses": "Porridge, flatbreads"},
+    "red kidney beans": {"protein": 24, "carbs": 60, "uses": "Curries, soups"},
+    "rice": {"protein": 7, "carbs": 80, "uses": "Staple food, flour"},
+    "sesame": {"protein": 18, "carbs": 23, "uses": "Oil, snacks, tahini"},
+    "soybean": {"protein": 36, "carbs": 30, "uses": "Milk, tofu, flour"},
+    "wheat": {"protein": 13, "carbs": 71, "uses": "Bread, flour, pasta"}
 }
