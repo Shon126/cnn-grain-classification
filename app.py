@@ -4,7 +4,6 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 import json
-import cv2
 
 st.set_page_config(page_title="Grain Identifier", layout="wide")
 
@@ -28,15 +27,13 @@ st.write("Upload a grain image or take a photo to identify it and learn its nutr
 # File uploader or camera input
 option = st.radio("Choose input method:", ["Upload Image", "Take Photo"])
 
+img = None
 if option == "Upload Image":
     uploaded_file = st.file_uploader("Upload your grain image", type=["jpg","jpeg","png"])
     if uploaded_file:
         img = Image.open(uploaded_file).convert("RGB")
 elif option == "Take Photo":
     img = st.camera_input("Take a photo of the grain")
-
-else:
-    img = None
 
 # ---------------- Prediction ----------------
 if img is not None:
