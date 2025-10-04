@@ -1,78 +1,61 @@
 import streamlit as st
 from keras.models import load_model
-from keras.preprocessing import image
+from PIL import Image
 import numpy as np
 import json
 import os
 
-st.set_page_config(page_title="Grain Classifier", page_icon="🌾", layout="centered")
-
-st.title("🌾 Grain Classifier App")
-st.write("Upload an image of a grain and the model will classify it for you.")
-
 # -------------------------------
-# 1️⃣ Set paths
+# 1️⃣ App title
 # -------------------------------
-MODEL_PATH = "grains_mobilenetv2_cleaned.keras"  # your model file
-LABELS_PATH = "class_labels.json"                # your labels file
+st.set_page_config(page_title="Grain Classifier", page_icon="🌾")
+st.title("🌾 Grain Classification App")
+st.write("Upload an image of a grain, and the AI will tell you what it is!")
 
 # -------------------------------
-# 2️⃣ Load model
+# 2️⃣ Load model and class labels
 # -------------------------------
+MODEL_PATH = "grains_mobilenetv2_cleaned.keras"
+LABELS_PATH = "class_labels.json"
+
 if not os.path.exists(MODEL_PATH):
-    st.error(f"❌ Model file not found: {MODEL_PATH}")
-    st.stop()
-
-try:
+    st.error(f"Model file not found! Check your path: {MODEL_PATH}")
+else:
     model = load_model(MODEL_PATH)
     st.success("✅ Model loaded successfully!")
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()
 
-# -------------------------------
-# 3️⃣ Load labels
-# -------------------------------
 if not os.path.exists(LABELS_PATH):
-    st.error(f"❌ Labels file not found: {LABELS_PATH}")
-    st.stop()
-
-with open(LABELS_PATH, 'r') as f:
-    class_labels = json.load(f)
-
-# Convert to list if dict:
-if isinstance(class_labels, dict):
-    # sometimes saved as {"0": "rice", "1": "wheat", ...}
-    class_labels = list(class_labels.values())
-
-st.write(f"Classes: {class_labels}")
+    st.error(f"Class labels file not found! Check your path: {LABELS_PATH}")
+else:
+    with open(LABELS_PATH, 'r') as f:
+        class_labels = json.load(f)
+    st.write("Class labels loaded:", list(class_labels.values()))
 
 # -------------------------------
-# 4️⃣ Upload Image
+# 3️⃣ Image upload
 # -------------------------------
-uploaded_file = st.file_uploader("Upload a grain image", type=["jpg","jpeg","png"])
+uploaded_file = st.file_uploader("Choose a grain image...", type=["jpg", "jpeg", "png"])
 
-if uploaded_file is not None:
-    # Display image
-    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-
-    # -------------------------------
-    # 5️⃣ Preprocess Image
-    # -------------------------------
-    img = image.load_img(uploaded_file, target_size=(224,224))  # change if your model input differs
-    img_array = image.img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+if uploaded_file:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption='Uploaded Image', use_column_width=True)
 
     # -------------------------------
-    # 6️⃣ Predict
+    # 4️⃣ Preprocess image
     # -------------------------------
-    try:
-        predictions = model.predict(img_array)
-        predicted_index = np.argmax(predictions, axis=1)[0]
-        predicted_class = class_labels[predicted_index]
-        confidence = np.max(predictions) * 100
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+    image_resized = image.resize((224, 224))
+    img_array = np.array(image_resized)
+    img_array = preprocess_input(img_array)
+    img_array = np.expand_dims(img_array, axis=0)  # Batch dimension
 
-        st.subheader("🔎 Prediction")
-        st.success(f"Class: *{predicted_class}* ({confidence:.2f}% confidence)")
-    except Exception as e:
-        st.error(f"Prediction error: {e}")
+    # -------------------------------
+    # 5️⃣ Predict
+    # -------------------------------
+    prediction = model.predict(img_array)
+    pred_class_index = np.argmax(prediction, axis=1)[0]
+    pred_class_label = class_labels[str(pred_class_index)]
+    pred_confidence = prediction[0][pred_class_index]
+
+    st.success(f"Predicted Grain: *{pred_class_label}*")
+    st.write(f"Confidence: {pred_confidence*100:.2f}%")
