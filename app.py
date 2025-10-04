@@ -1,21 +1,21 @@
 import streamlit as st
 import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 import numpy as np
 import json
 from PIL import Image
 
-st.set_page_config(page_title="Grain Identifier", layout="wide")
+# ---------------------------
+# Paths
+MODEL_PATH = "grain_model.keras"
+CLASS_LABELS_PATH = "class_labels.json"
+GRAINS_INFO_PATH = "grains_info.json"  # create a JSON file with protein, carbs, uses
 
-# ---------------- PATHS ----------------
-MODEL_PATH = "grains_model.h5"           # Your trained model
-LABELS_PATH = "class_labels.json"        # Class labels mapping
-GRAINS_INFO_PATH = "grains_info.json"    # Grain info (protein, carbs, uses)
-
-# ---------------- LOAD MODEL & LABELS ----------------
+# ---------------------------
 @st.cache_resource
 def load_model_and_labels():
     model = tf.keras.models.load_model(MODEL_PATH)
-    with open(LABELS_PATH, "r") as f:
+    with open(CLASS_LABELS_PATH, "r") as f:
         class_labels = json.load(f)
     with open(GRAINS_INFO_PATH, "r") as f:
         grains_info = json.load(f)
@@ -23,31 +23,31 @@ def load_model_and_labels():
 
 model, class_labels, grains_info = load_model_and_labels()
 
-# ---------------- TITLE ----------------
+# ---------------------------
 st.title("🌾 Grain Identifier")
+st.write("Upload a grain image or take a photo, and get its name, confidence, and nutritional info.")
 
-# ---------------- IMAGE UPLOAD ----------------
-uploaded_file = st.file_uploader("Upload an image of the grain", type=["jpg","jpeg","png"])
-if uploaded_file is not None:
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg","jpeg","png"])
+if uploaded_file:
     img = Image.open(uploaded_file).convert("RGB")
     st.image(img, caption="Uploaded Image", use_column_width=True)
-
-    # Preprocess image for model
-    img_array = np.array(img.resize((128,128))) / 255.0
+    
+    img = img.resize((224,224))  # adjust to your model input
+    img_array = np.array(img)/255.0
     img_array = np.expand_dims(img_array, axis=0)
-
-    # ---------------- PREDICTION ----------------
-    pred_prob = model.predict(img_array)
-    idx = np.argmax(pred_prob)
-    label = class_labels[str(idx)]
-    confidence = pred_prob[0][idx] * 100
-
-    # Grain info
-    info = grains_info.get(label, {"Protein":"N/A", "Carbs":"N/A", "Uses":"N/A"})
-
-    # ---------------- DISPLAY ----------------
+    
+    # Prediction
+    pred_prob = model.predict(img_array)[0]
+    top_idx = np.argmax(pred_prob)
+    top_label = class_labels[str(top_idx)]
+    confidence = pred_prob[top_idx]*100
+    
     st.subheader("🔹 Prediction")
-    st.markdown(f"{label}** — {confidence:.2f}% confidence")
-    st.markdown(f"*Protein:* {info['Protein']}")
-    st.markdown(f"*Carbs:* {info['Carbs']}")
-    st.markdown(f"*Uses:* {info['Uses']}")
+    st.write(f"{top_label}** — {confidence:.2f}% confidence")
+    
+    # Info
+    info = grains_info.get(top_label, {})
+    if info:
+        st.write(f"*Protein:* {info.get('protein','N/A')} g per 100g")
+        st.write(f"*Carbs:* {info.get('carbs','N/A')} g per 100g")
+        st.write(f"*Uses:* {info.get('uses','N/A')}")
