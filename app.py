@@ -3,67 +3,69 @@ import tensorflow as tf
 import numpy as np
 import json
 import cv2
-import os
-import gdown
+from PIL import Image
 
+# ---------------------
+# CONFIG
+# ---------------------
 st.set_page_config(page_title="Grain Identifier", layout="wide")
 
-# ------------------ Paths ------------------ #
-MODEL_FILE = "grains_mobilenetv2_cleaned.h5"
-CLASS_LABELS_FILE = "class_labels.json"
-GRAINS_INFO_FILE = "grains_info.json"
+MODEL_PATH = "grains_mobilenetv2_cleaned.h5"
+CLASS_LABELS_PATH = "class_labels.json"
+GRAINS_INFO_PATH = "grains_info.json"
+IMG_SIZE = (224, 224)  # Model input size
 
-# Google Drive link for the model (replace YOUR_FILE_ID)
-MODEL_DRIVE_URL = "https://drive.google.com/uc?id=YOUR_FILE_ID"
-
-# ------------------ Download model if not exists ------------------ #
-if not os.path.exists(MODEL_FILE):
-    st.info("Downloading model…")
-    gdown.download(MODEL_DRIVE_URL, MODEL_FILE, quiet=False)
-    st.success("Model downloaded!")
-
-# ------------------ Load model and JSONs ------------------ #
-@st.cache_data
+# ---------------------
+# LOAD MODEL & LABELS
+# ---------------------
+@st.cache_resource(show_spinner=True)
 def load_model_and_labels():
-    model = tf.keras.models.load_model(MODEL_FILE)
-    with open(CLASS_LABELS_FILE, "r") as f:
+    model = tf.keras.models.load_model(MODEL_PATH)
+    with open(CLASS_LABELS_PATH, "r") as f:
         class_labels = json.load(f)
-    with open(GRAINS_INFO_FILE, "r") as f:
+    with open(GRAINS_INFO_PATH, "r") as f:
         grains_info = json.load(f)
     return model, class_labels, grains_info
 
 model, class_labels, grains_info = load_model_and_labels()
 
-# ------------------ App Title ------------------ #
+# ---------------------
+# PAGE UI
+# ---------------------
 st.title("🌾 Grain Identifier")
+st.write("Upload an image of a grain, and this app will identify it and provide nutritional info.")
 
-# ------------------ Image Upload ------------------ #
-uploaded_file = st.file_uploader("Upload an image of a grain", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-if uploaded_file:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+if uploaded_file is not None:
+    # Display uploaded image
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    st.image(img_rgb, caption="Uploaded Image", use_container_width=True)
+    # Preprocess image for model
+    img_array = np.array(image)
+    img_array = cv2.resize(img_array, IMG_SIZE)
+    img_array = img_array / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
-    # Preprocess for model
-    img_resized = cv2.resize(img_rgb, (224, 224))  # assuming MobileNetV2 input
-    img_array = np.expand_dims(img_resized / 255.0, axis=0)
-
-    # ------------------ Prediction ------------------ #
+    # Predict
     try:
         pred_prob = model.predict(img_array)[0]
         idx = np.argmax(pred_prob)
         label = class_labels[str(idx)]
         confidence = pred_prob[idx] * 100
 
-        # Grain info
-        info = grains_info.get(label, {})
+        st.subheader("🔹 Prediction:")
+        st.markdown(f"{label}** — {confidence:.2f}% confidence")
 
-        st.markdown(f"### 🔹 Prediction: {label} — {confidence:.2f}% confidence")
-        st.markdown(f"*Protein:* {info.get('Protein', 'N/A')} per 100g")
-        st.markdown(f"*Carbs:* {info.get('Carbs', 'N/A')} per 100g")
-        st.markdown(f"*Uses:* {info.get('Uses', 'N/A')}")
+        # Show nutritional info
+        info = grains_info.get(label, {})
+        if info:
+            st.markdown(f"*Protein:* {info.get('Protein', 'N/A')} g per 100g")
+            st.markdown(f"*Carbs:* {info.get('Carbs', 'N/A')} g per 100g")
+            st.markdown(f"*Uses:* {info.get('Uses', 'N/A')}")
+        else:
+            st.write("No additional info available.")
+
     except Exception as e:
         st.error(f"❌ Prediction failed: {e}")
