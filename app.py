@@ -5,7 +5,7 @@ import numpy as np
 import json
 
 # --- Paths ---
-MODEL_PATH = "grains_model.keras"  # your Keras 3 model
+MODEL_PATH = "grains_model.tf2200.h5"  # your Keras 3 model
 LABELS_PATH = "class_labels.json"
 INFO_PATH = "grains_info.json"
 
