@@ -1,15 +1,15 @@
 {
-    "bajra": {"protein": 11, "carbs": 67, "uses": "Breads, porridge"},
-    "chickpea": {"protein": 19, "carbs": 61, "uses": "Curries, salads, flour"},
-    "foxtail millet": {"protein": 12, "carbs": 65, "uses": "Porridge, flatbreads"},
-    "jowar": {"protein": 11, "carbs": 72, "uses": "Flatbreads, porridge"},
-    "lentils": {"protein": 26, "carbs": 60, "uses": "Soups, curries"},
-    "maize": {"protein": 9, "carbs": 74, "uses": "Snacks, flour, popcorn"},
-    "proso": {"protein": 12, "carbs": 68, "uses": "Porridge, bird feed"},
-    "ragi": {"protein": 7, "carbs": 72, "uses": "Porridge, flatbreads"},
-    "red kidney beans": {"protein": 24, "carbs": 60, "uses": "Curries, soups"},
-    "rice": {"protein": 7, "carbs": 80, "uses": "Staple food, flour"},
-    "sesame": {"protein": 18, "carbs": 23, "uses": "Oil, snacks, tahini"},
-    "soybean": {"protein": 36, "carbs": 30, "uses": "Milk, tofu, flour"},
-    "wheat": {"protein": 13, "carbs": 71, "uses": "Bread, flour, pasta"}
+    "rice": {"Protein":"7g per 100g","Carbs":"80g per 100g","Uses":"Steamed rice, fried rice"},
+    "maize": {"Protein":"9g per 100g","Carbs":"74g per 100g","Uses":"Corn flour, cornmeal"},
+    "wheat": {"Protein":"13g per 100g","Carbs":"71g per 100g","Uses":"Bread, pasta, porridge"},
+    "bajra": {"Protein":"11g per 100g","Carbs":"67g per 100g","Uses":"Breads, porridge"},
+    "ragi": {"Protein":"7.3g per 100g","Carbs":"72g per 100g","Uses":"Porridge, biscuits"},
+    "lentils": {"Protein":"26g per 100g","Carbs":"60g per 100g","Uses":"Soups, curries"},
+    "chickpea": {"Protein":"19g per 100g","Carbs":"61g per 100g","Uses":"Curries, salads"},
+    "soybean": {"Protein":"36g per 100g","Carbs":"30g per 100g","Uses":"Milk, tofu, flour"},
+    "jowar": {"Protein":"11g per 100g","Carbs":"72g per 100g","Uses":"Breads, porridges"},
+    "foxtail millet": {"Protein":"12g per 100g","Carbs":"65g per 100g","Uses":"Porridge, snacks"},
+    "red kidney beans": {"Protein":"24g per 100g","Carbs":"60g per 100g","Uses":"Salads, curries"},
+    "proso": {"Protein":"11g per 100g","Carbs":"70g per 100g","Uses":"Porridge, breads"},
+    "sesame": {"Protein":"18g per 100g","Carbs":"23g per 100g","Uses":"Oil, seeds, snacks"}
 }

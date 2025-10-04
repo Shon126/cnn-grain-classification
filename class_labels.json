@@ -1,1 +1,15 @@
-["maize","proso","red kidney beans","chickpea","soybean","lentils","jowar","sesame","rice","ragi","bajra","foxtail millet","wheat"]
+{
+    "0": "bajra",
+    "1": "chickpea",
+    "2": "foxtail millet",
+    "3": "jowar",
+    "4": "lentils",
+    "5": "maize",
+    "6": "proso",
+    "7": "ragi",
+    "8": "red kidney beans",
+    "9": "rice",
+    "10": "sesame",
+    "11": "soybean",
+    "12": "wheat"
+}
